@@ -5,6 +5,8 @@ import com.squareup.okhttp.MediaType;
 import com.squareup.okhttp.Request;
 import com.squareup.okhttp.Response;
 import com.squareup.okhttp.ResponseSource;
+import com.squareup.okhttp.internal.bytes.OkBuffers;
+import com.squareup.okhttp.internal.bytes.Source;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.HttpURLConnection;
@@ -31,6 +33,9 @@ public final class CacheStrategy {
     }
     @Override public long contentLength() {
       return 0;
+    }
+    @Override public Source source() {
+      return OkBuffers.source(EMPTY_INPUT_STREAM);
     }
     @Override public InputStream byteStream() {
       return EMPTY_INPUT_STREAM;

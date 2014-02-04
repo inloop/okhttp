@@ -20,8 +20,9 @@ import com.squareup.okhttp.Headers;
 import com.squareup.okhttp.Protocol;
 import com.squareup.okhttp.Request;
 import com.squareup.okhttp.Response;
-import com.squareup.okhttp.internal.bytes.ByteString;
 import com.squareup.okhttp.internal.Util;
+import com.squareup.okhttp.internal.bytes.ByteString;
+import com.squareup.okhttp.internal.bytes.Source;
 import com.squareup.okhttp.internal.spdy.ErrorCode;
 import com.squareup.okhttp.internal.spdy.Header;
 import com.squareup.okhttp.internal.spdy.SpdyConnection;
@@ -187,6 +188,10 @@ public final class SpdyTransport implements Transport {
         .headers(headersBuilder.build());
   }
 
+  @Override public Source getTransferSource(CacheRequest cacheRequest) throws IOException {
+    throw new UnsupportedOperationException("TODO");
+  }
+
   @Override public InputStream getTransferStream(CacheRequest cacheRequest) throws IOException {
     return new SpdyInputStream(stream, cacheRequest, httpEngine);
   }
@@ -194,6 +199,11 @@ public final class SpdyTransport implements Transport {
   @Override public boolean makeReusable(boolean streamCanceled, OutputStream requestBodyOut,
       InputStream responseBodyIn) {
     return true; // SPDY sockets are always reusable.
+  }
+
+  @Override public boolean makeReusable(
+      boolean streamCanceled, OutputStream requestBodyOut, Source responseBodyIn) {
+    throw new UnsupportedOperationException("TODO");
   }
 
   /** When true, this header should not be emitted or consumed. */

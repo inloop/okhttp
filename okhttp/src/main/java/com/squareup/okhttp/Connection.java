@@ -16,10 +16,12 @@
  */
 package com.squareup.okhttp;
 
-import com.squareup.okhttp.internal.bytes.ByteString;
 import com.squareup.okhttp.internal.Platform;
+import com.squareup.okhttp.internal.bytes.ByteString;
+import com.squareup.okhttp.internal.bytes.OkBuffers;
 import com.squareup.okhttp.internal.http.HttpAuthenticator;
 import com.squareup.okhttp.internal.http.HttpEngine;
+import com.squareup.okhttp.internal.http.HttpSource;
 import com.squareup.okhttp.internal.http.HttpTransport;
 import com.squareup.okhttp.internal.http.SpdyTransport;
 import com.squareup.okhttp.internal.spdy.SpdyConnection;
@@ -69,6 +71,7 @@ public final class Connection implements Closeable {
 
   private Socket socket;
   private InputStream in;
+  private HttpSource source;
   private OutputStream out;
   private boolean connected = false;
   private SpdyConnection spdyConnection;
@@ -255,7 +258,7 @@ public final class Connection implements Closeable {
   public Object newTransport(HttpEngine httpEngine) throws IOException {
     return (spdyConnection != null)
         ? new SpdyTransport(httpEngine, spdyConnection)
-        : new HttpTransport(httpEngine, out, in);
+        : new HttpTransport(httpEngine, out, source);
   }
 
   /**
@@ -321,7 +324,7 @@ public final class Connection implements Closeable {
   }
 
   private void streamWrapper() throws IOException {
-    in = new BufferedInputStream(in, 4096);
+    source = new HttpSource(OkBuffers.source(in));
     out = new BufferedOutputStream(out, 256);
   }
 }

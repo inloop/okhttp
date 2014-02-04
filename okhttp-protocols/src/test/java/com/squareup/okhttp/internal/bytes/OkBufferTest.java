@@ -465,8 +465,8 @@ public final class OkBufferTest {
   @Test public void readByte() throws Exception {
     OkBuffer data = new OkBuffer();
     data.write(new ByteString(new byte[] { (byte) 0xab, (byte) 0xcd }));
-    assertEquals((byte) 0xab, data.readByte());
-    assertEquals((byte) 0xcd, data.readByte());
+    assertEquals(0xab, data.readByte() & 0xff);
+    assertEquals(0xcd, data.readByte() & 0xff);
     assertEquals(0, data.byteCount());
   }
 
@@ -538,11 +538,19 @@ public final class OkBufferTest {
     buffer.writeUtf8(repeat('b', Segment.SIZE));
     buffer.writeUtf8("c");
     buffer.skip(1);
-    assertEquals('b', buffer.readByte());
+    assertEquals('b', buffer.readByte() & 0xff);
     buffer.skip(Segment.SIZE - 2);
-    assertEquals('b', buffer.readByte());
+    assertEquals('b', buffer.readByte() & 0xff);
     buffer.skip(1);
     assertEquals(0, buffer.byteCount());
+  }
+
+  @Test public void testWritePrefixToEmptyBuffer() {
+    OkBuffer sink = new OkBuffer();
+    OkBuffer source = new OkBuffer();
+    source.writeUtf8("abcd");
+    sink.write(source, 2, Deadline.NONE);
+    assertEquals("ab", sink.readUtf8(2));
   }
 
   private String repeat(char c, int count) {

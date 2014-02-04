@@ -16,6 +16,7 @@
 package com.squareup.okhttp;
 
 import com.squareup.okhttp.internal.Util;
+import com.squareup.okhttp.internal.bytes.Source;
 import com.squareup.okhttp.internal.http.HttpDate;
 import com.squareup.okhttp.internal.http.OkHeaders;
 import com.squareup.okhttp.internal.http.StatusLine;
@@ -210,6 +211,8 @@ public final class Response {
      * {@link #byteStream}, or -1 if unknown.
      */
     public abstract long contentLength();
+
+    public abstract Source source();
 
     public abstract InputStream byteStream();
 

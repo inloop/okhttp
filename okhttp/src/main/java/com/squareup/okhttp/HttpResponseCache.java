@@ -20,6 +20,8 @@ import com.squareup.okhttp.internal.Base64;
 import com.squareup.okhttp.internal.DiskLruCache;
 import com.squareup.okhttp.internal.StrictLineReader;
 import com.squareup.okhttp.internal.Util;
+import com.squareup.okhttp.internal.bytes.OkBuffers;
+import com.squareup.okhttp.internal.bytes.Source;
 import java.io.BufferedWriter;
 import java.io.ByteArrayInputStream;
 import java.io.File;
@@ -571,6 +573,10 @@ public final class HttpResponseCache extends ResponseCache implements OkResponse
       } catch (NumberFormatException e) {
         return -1;
       }
+    }
+
+    @Override public Source source() {
+      return OkBuffers.source(bodyIn);
     }
 
     @Override public InputStream byteStream() {

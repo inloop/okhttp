@@ -16,6 +16,9 @@
 
 package com.squareup.okhttp.internal;
 
+import com.squareup.okhttp.internal.bytes.Deadline;
+import com.squareup.okhttp.internal.bytes.OkBuffer;
+import com.squareup.okhttp.internal.bytes.Source;
 import com.squareup.okhttp.internal.spdy.Header;
 import java.io.ByteArrayInputStream;
 import java.io.Closeable;
@@ -145,6 +148,17 @@ public final class Util {
     if (serverSocket != null) {
       try {
         serverSocket.close();
+      } catch (RuntimeException rethrown) {
+        throw rethrown;
+      } catch (Exception ignored) {
+      }
+    }
+  }
+
+  public static void closeQuietly(Source source) {
+    if (source != null) {
+      try {
+        source.close(Deadline.NONE);
       } catch (RuntimeException rethrown) {
         throw rethrown;
       } catch (Exception ignored) {
@@ -309,6 +323,14 @@ public final class Util {
     skipBuffer.set(buffer);
 
     return skipped;
+  }
+
+  public static void skipByReading(Source source, int discardStreamTimeoutMillis)
+      throws IOException {
+    // TODO: honor timeouts here.
+    OkBuffer discard = new OkBuffer();
+    while (source.read(discard, Long.MAX_VALUE, Deadline.NONE) != -1) {
+    }
   }
 
   public static long skipByReading(InputStream in, long byteCount) throws IOException {

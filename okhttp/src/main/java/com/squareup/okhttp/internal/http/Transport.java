@@ -18,6 +18,7 @@ package com.squareup.okhttp.internal.http;
 
 import com.squareup.okhttp.Request;
 import com.squareup.okhttp.Response;
+import com.squareup.okhttp.internal.bytes.Source;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -64,10 +65,15 @@ interface Transport {
   /** Read response headers and update the cookie manager. */
   Response.Builder readResponseHeaders() throws IOException;
 
+  Source getTransferSource(CacheRequest cacheRequest) throws IOException;
+
   // TODO: make this the content stream?
   InputStream getTransferStream(CacheRequest cacheRequest) throws IOException;
 
   /** Returns true if the underlying connection can be recycled. */
   boolean makeReusable(boolean streamCanceled, OutputStream requestBodyOut,
       InputStream responseBodyIn);
+
+  /** Returns true if the underlying connection can be recycled. */
+  boolean makeReusable(boolean streamCanceled, OutputStream requestBodyOut, Source responseBodyIn);
 }

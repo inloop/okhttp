@@ -28,6 +28,9 @@ import com.squareup.okhttp.ResponseSource;
 import com.squareup.okhttp.Route;
 import com.squareup.okhttp.TunnelRequest;
 import com.squareup.okhttp.internal.Dns;
+import com.squareup.okhttp.internal.bytes.GzipSource;
+import com.squareup.okhttp.internal.bytes.OkBuffers;
+import com.squareup.okhttp.internal.bytes.Source;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -39,7 +42,6 @@ import java.net.UnknownHostException;
 import java.security.cert.CertificateException;
 import java.util.List;
 import java.util.Map;
-import java.util.zip.GZIPInputStream;
 import javax.net.ssl.HostnameVerifier;
 import javax.net.ssl.SSLHandshakeException;
 import javax.net.ssl.SSLSocketFactory;
@@ -107,8 +109,9 @@ public class HttpEngine {
 
   /** Null until a response is received from the network or the cache. */
   private Response response;
-  private InputStream responseTransferIn;
-  private InputStream responseBodyIn;
+  private Source responseTransferSource;
+  private Source responseBodyIn;
+  private InputStream responseBodyStream;
 
   /**
    * The cache response currently being validated on a conditional get. Null
@@ -207,7 +210,7 @@ public class HttpEngine {
       // No need for the network! Promote the cached response immediately.
       this.response = validatingResponse;
       if (validatingResponse.body() != null) {
-        initContentStream(validatingResponse.body().byteStream());
+        initContentStream(validatingResponse.body().source());
       }
     }
   }
@@ -296,7 +299,12 @@ public class HttpEngine {
     return response;
   }
 
-  public final InputStream getResponseBody() {
+  public final InputStream getResponseBodyStream() {
+    InputStream result = responseBodyStream;
+    return result != null ? result : (responseBodyStream = OkBuffers.inputStream(responseBodyIn));
+  }
+
+  public final Source getResponseBody() {
     if (response == null) throw new IllegalStateException();
     return responseBodyIn;
   }
@@ -392,7 +400,7 @@ public class HttpEngine {
       connectionReleased = true;
 
       if (transport == null
-          || !transport.makeReusable(streamCanceled, requestBodyOut, responseTransferIn)) {
+          || !transport.makeReusable(streamCanceled, requestBodyOut, responseTransferSource)) {
         closeQuietly(connection);
         connection = null;
       } else if (automaticallyReleaseConnectionToPool) {
@@ -417,14 +425,14 @@ public class HttpEngine {
    * a response body and we will crash if we attempt to decompress the zero-byte
    * stream.
    */
-  private void initContentStream(InputStream transferStream) throws IOException {
-    responseTransferIn = transferStream;
+  private void initContentStream(Source transferStream) throws IOException {
+    responseTransferSource = transferStream;
     if (transparentGzip && "gzip".equalsIgnoreCase(response.header("Content-Encoding"))) {
       response = response.newBuilder()
           .removeHeader("Content-Encoding")
           .removeHeader("Content-Length")
           .build();
-      responseBodyIn = new GZIPInputStream(transferStream);
+      responseBodyIn = new GzipSource(transferStream);
     } else {
       responseBodyIn = transferStream;
     }
@@ -562,7 +570,7 @@ public class HttpEngine {
         responseCache.update(validatingResponse, cacheableResponse());
 
         if (validatingResponse.body() != null) {
-          initContentStream(validatingResponse.body().byteStream());
+          initContentStream(validatingResponse.body().source());
         }
         return;
       } else {
@@ -572,13 +580,13 @@ public class HttpEngine {
 
     if (!hasResponseBody()) {
       // Don't call initContentStream() when the response doesn't have any content.
-      responseTransferIn = transport.getTransferStream(cacheRequest);
-      responseBodyIn = responseTransferIn;
+      responseTransferSource = transport.getTransferSource(cacheRequest);
+      responseBodyIn = responseTransferSource;
       return;
     }
 
     maybeCache();
-    initContentStream(transport.getTransferStream(cacheRequest));
+    initContentStream(transport.getTransferSource(cacheRequest));
   }
 
   /**
