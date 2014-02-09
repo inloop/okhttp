@@ -18,6 +18,7 @@ package com.squareup.okhttp.internal.spdy;
 import com.squareup.okhttp.Protocol;
 import com.squareup.okhttp.internal.NamedRunnable;
 import com.squareup.okhttp.internal.Util;
+import com.squareup.okhttp.internal.bytes.ByteString;
 import java.io.Closeable;
 import java.io.IOException;
 import java.io.InputStream;
@@ -665,8 +666,8 @@ public final class SpdyConnection implements Closeable {
       }
     }
 
-    @Override public void goAway(int lastGoodStreamId, ErrorCode errorCode, byte[] debugData) {
-      if (debugData.length > 0) { // TODO: log the debugData
+    @Override public void goAway(int lastGoodStreamId, ErrorCode errorCode, ByteString debugData) {
+      if (debugData.size() > 0) { // TODO: log the debugData
       }
       synchronized (SpdyConnection.this) {
         shutdown = true;

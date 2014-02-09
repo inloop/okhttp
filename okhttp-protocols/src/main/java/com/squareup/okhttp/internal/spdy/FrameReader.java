@@ -16,6 +16,7 @@
 
 package com.squareup.okhttp.internal.spdy;
 
+import com.squareup.okhttp.internal.bytes.ByteString;
 import java.io.Closeable;
 import java.io.IOException;
 import java.io.InputStream;
@@ -75,7 +76,7 @@ public interface FrameReader extends Closeable {
      * @param errorCode reason for closing the connection.
      * @param debugData only valid for http/2; opaque debug data to send.
      */
-    void goAway(int lastGoodStreamId, ErrorCode errorCode, byte[] debugData);
+    void goAway(int lastGoodStreamId, ErrorCode errorCode, ByteString debugData);
 
     /**
      * Notifies that an additional {@code windowSizeIncrement} bytes can be
