@@ -61,13 +61,25 @@ public final class OkUrlFactory implements URLStreamHandlerFactory, Cloneable {
     return open(url, client.getProxy());
   }
 
+  public HttpURLConnection open(URL url, boolean userRateLimiter) {
+      return open(url, client.getProxy(), userRateLimiter);
+  }
+
   HttpURLConnection open(URL url, Proxy proxy) {
+    return open(url, proxy, false);
+  }
+
+  HttpURLConnection open(URL url, Proxy proxy, boolean useRateLimiter) {
     String protocol = url.getProtocol();
     OkHttpClient copy = client.copyWithDefaults();
     copy.setProxy(proxy);
 
-    if (protocol.equals("http")) return new HttpURLConnectionImpl(url, copy);
-    if (protocol.equals("https")) return new HttpsURLConnectionImpl(url, copy);
+    if (protocol.equals("http")) {
+      return new HttpURLConnectionImpl(url, copy, client.getRateLimiter());
+    }
+    if (protocol.equals("https")) {
+      return new HttpsURLConnectionImpl(url, copy, client.getRateLimiter());
+    }
     throw new IllegalArgumentException("Unexpected protocol: " + protocol);
   }
 

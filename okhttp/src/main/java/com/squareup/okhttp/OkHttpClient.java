@@ -23,6 +23,8 @@ import com.squareup.okhttp.internal.http.AuthenticatorAdapter;
 import com.squareup.okhttp.internal.http.HttpEngine;
 import com.squareup.okhttp.internal.http.Transport;
 import com.squareup.okhttp.internal.tls.OkHostnameVerifier;
+import com.squareup.okhttp.ratelimiter.RateLimiter;
+
 import java.io.IOException;
 import java.net.CookieHandler;
 import java.net.Proxy;
@@ -150,10 +152,26 @@ public final class OkHttpClient implements Cloneable {
   private int connectTimeout;
   private int readTimeout;
   private int writeTimeout;
+  private RateLimiter rateLimiter;
 
   public OkHttpClient() {
+    this(-1);
+  }
+
+  /**
+   *
+   * @param limitRequestsPerSecond - set to -1 for unlimited
+   */
+  public OkHttpClient(int limitRequestsPerSecond) {
     routeDatabase = new RouteDatabase();
     dispatcher = new Dispatcher();
+    if (-1 != limitRequestsPerSecond) {
+      rateLimiter = RateLimiter.create(limitRequestsPerSecond);
+    }
+  }
+
+  protected RateLimiter getRateLimiter() {
+    return rateLimiter;
   }
 
   /**

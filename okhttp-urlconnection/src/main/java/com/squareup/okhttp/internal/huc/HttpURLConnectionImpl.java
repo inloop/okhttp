@@ -34,6 +34,8 @@ import com.squareup.okhttp.internal.http.HttpMethod;
 import com.squareup.okhttp.internal.http.OkHeaders;
 import com.squareup.okhttp.internal.http.RetryableSink;
 import com.squareup.okhttp.internal.http.StatusLine;
+import com.squareup.okhttp.ratelimiter.RateLimiter;
+
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
@@ -80,6 +82,7 @@ public class HttpURLConnectionImpl extends HttpURLConnection {
   protected HttpEngine httpEngine;
   /** Lazily created (with synthetic headers) on first call to getHeaders(). */
   private Headers responseHeaders;
+  private final RateLimiter mRateLimiter;
 
   /**
    * The most recently attempted route. This will be null if we haven't sent a
@@ -93,15 +96,19 @@ public class HttpURLConnectionImpl extends HttpURLConnection {
    */
   Handshake handshake;
 
-  public HttpURLConnectionImpl(URL url, OkHttpClient client) {
+  public HttpURLConnectionImpl(URL url, OkHttpClient client, RateLimiter rateLimiter) {
     super(url);
     this.client = client;
+    this.mRateLimiter = rateLimiter;
   }
 
   @Override public final void connect() throws IOException {
     initHttpEngine();
     boolean success;
     do {
+      if (mRateLimiter != null) {
+        mRateLimiter.acquire(1);
+      }
       success = execute(false);
     } while (!success);
   }
@@ -417,6 +424,9 @@ public class HttpURLConnectionImpl extends HttpURLConnection {
    */
   private boolean execute(boolean readResponse) throws IOException {
     try {
+      if (mRateLimiter != null) {
+        mRateLimiter.acquire();
+      }
       httpEngine.sendRequest();
       route = httpEngine.getRoute();
       handshake = httpEngine.getConnection() != null
