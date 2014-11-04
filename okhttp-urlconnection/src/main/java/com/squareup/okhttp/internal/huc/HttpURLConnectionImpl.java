@@ -52,6 +52,7 @@ import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
+
 import okio.BufferedSink;
 import okio.Sink;
 
@@ -405,8 +406,8 @@ public class HttpURLConnectionImpl extends HttpURLConnection {
       }
 
       Connection connection = httpEngine.close();
-      httpEngine = newHttpEngine(followUp.method(), connection, (RetryableSink) requestBody,
-          response);
+        httpEngine = newHttpEngine(followUp.method(), connection, (RetryableSink) requestBody,
+                response);
     }
   }
 
@@ -426,10 +427,13 @@ public class HttpURLConnectionImpl extends HttpURLConnection {
         httpEngine.readResponse();
       }
 
+      Platform.get().logW("OKHTTP - sent request " + httpEngine.getRequest()
+          + " response " + readResponse);
       return true;
     } catch (IOException e) {
       HttpEngine retryEngine = httpEngine.recover(e);
       if (retryEngine != null) {
+        Platform.get().logW("OKHTTP - retrying request " + httpEngine.getRequest() + e);
         httpEngine = retryEngine;
         return false;
       }

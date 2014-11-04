@@ -34,6 +34,7 @@ import com.squareup.okhttp.internal.Util;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.CacheRequest;
+import java.net.SocketTimeoutException;
 import java.net.CookieHandler;
 import java.net.ProtocolException;
 import java.net.Proxy;
@@ -424,8 +425,9 @@ public final class HttpEngine {
     // do not retry, we didn't have an abrupt server-initiated exception.
     boolean sslFailure =
         e instanceof SSLHandshakeException && e.getCause() instanceof CertificateException;
+    boolean timeOutFailure = e instanceof SocketTimeoutException;
     boolean protocolFailure = e instanceof ProtocolException;
-    return !sslFailure && !protocolFailure;
+    return !sslFailure && !protocolFailure && !timeOutFailure;
   }
 
   /**
