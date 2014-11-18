@@ -427,8 +427,6 @@ public class HttpURLConnectionImpl extends HttpURLConnection {
         httpEngine.readResponse();
       }
 
-      Platform.get().logW("OKHTTP - sent request " + httpEngine.getRequest()
-          + " response " + readResponse);
       return true;
     } catch (IOException e) {
       HttpEngine retryEngine = httpEngine.recover(e);
