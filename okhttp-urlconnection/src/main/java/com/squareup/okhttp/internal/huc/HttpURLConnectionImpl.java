@@ -431,7 +431,6 @@ public class HttpURLConnectionImpl extends HttpURLConnection {
     } catch (IOException e) {
       HttpEngine retryEngine = httpEngine.recover(e);
       if (retryEngine != null) {
-        Platform.get().logW("OKHTTP - retrying request " + httpEngine.getRequest() + e);
         httpEngine = retryEngine;
         return false;
       }
